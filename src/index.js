@@ -8,7 +8,7 @@ const imageType = 'photo';
 const orientation = 'horizontal';
 const safesearch = true;
 let page = 1;
-const per_page = 3;
+const per_page = 40;
 let query = null;
 
 const gallery = document.querySelector('.gallery');
