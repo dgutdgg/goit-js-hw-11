@@ -1,142 +1,160 @@
 import axios from 'axios';
 import Notiflix from 'notiflix';
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
 
 const apiKey = '42667221-e17031dd8773ae279d6f89390';
 const imageType = 'photo';
 const orientation = 'horizontal';
 const safesearch = true;
+let page = 1;
+const per_page = 3;
+let query = null;
 
 const gallery = document.querySelector('.gallery');
 const loader = document.querySelector('.loader');
-const form = document.querySelector('.search-form');
-
-axios.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
+const form  = document.querySelector('.search-form');
+const loadMoreButton = document.querySelector('.load-more');
+const lightbox = new SimpleLightbox('.gallery a', {
+  showCounter: true,
+  overlay: true,
+});
 
 function toggleLoader(show) {
-  if (show) {
-    loader.style.display = 'block';
-  } else {
-    loader.style.display = 'none';
-  }
+  loader.style.display = show ? 'block' : 'none';
 }
 
-function showError(message) {
-  console.error('Error:', message);
-  Notiflix.Notify.failure(message);
+function toggleMoreButton(show) {
+  loadMoreButton.style.display = show ? 'block' : 'none';
 }
 
-let currentPage = 1;
-const loadMoreButton = document.querySelector('.load-more');
+function showError(err) {
+  console.error('Error:', err);
+  Notiflix.Notify.failure('Oops! Something went wrong! Try reloading the page!');
+}
 
-async function fetchImages(phrase) {
+async function fetchImages(phrase = null, page = 1) {
   try {
     const response = await axios.get('https://pixabay.com/api', {
       params: {
         key: apiKey,
-        image_type: imageType,
+        q: phrase,
+        image_type: 'photo',
         orientation: orientation,
         safesearch: safesearch,
-        page: currentPage,
-        per_page: 40,
+        page: page,
+        per_page: per_page,
       }
     });
 
-    currentPage++; 
+    totalHits = response.data.totalHits;
 
-    const totalHits = response.data.totalHits;
-
-    if (currentPage === 2) {
-      loadMoreButton.style.display = 'block';
-    }
-
-    if (totalHits <= currentPage * 40) {
-      loadMoreButton.style.display = 'none';
-      Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-    }
-
-    const images = response.data.hits.map(image => ({
+    return response.data.hits.map(image => ({
       id: image.id,
-      url: image.webformatURL,
+      thumbnail: image.webformatURL,
+      url: image.largeImageURL,
+      tags: image.tags,
       likes: image.likes,
       views: image.views,
-      comments: image.comments,
       downloads: image.downloads,
+      comments: image.comments,
     }));
-
-    return images;
   } catch (error) {
     throw new Error(error.message);
   }
 }
 
-async function renderImages(phrase) {
-  try {
-    toggleLoader(true);
-
-    const images = await fetchImages(phrase);
-
-    if (images.length === 0) {
-      Notiflix.Notify.info('Sorry, there are no images matching your search query. Please try again.');
-    } else {
-      gallery.innerHTML = '';
-
-      images.forEach(image => {
-        const rowWrapper = document.createElement('div');
-        const img = document.createElement('img');
-        const metaWrapper = document.createElement('div');
-        const infoItemLikes = document.createElement('p');
-        const infoItemViews = document.createElement('p');
-        const infoItemComments = document.createElement('p');
-        const infoItemDownloads = document.createElement('p');
-
-        infoItemLikes.classList.add('info-item');
-        infoItemViews.classList.add('info-item');
-        infoItemComments.classList.add('info-item');
-        infoItemDownloads.classList.add('info-item');
-
-        rowWrapper.classList.add('photo-card');
-        metaWrapper.classList.add('info');
-
-        img.value = image.id;
-        img.src = image.url;
-        img.loading = 'lazy';
-
-        infoItemLikes.innerHTML = 'Likes: ' + image.likes;
-        infoItemViews.innerHTML = 'Views: ' + image.views;
-        infoItemDownloads.innerHTML = 'Downloads: ' + image.downloads;
-        infoItemComments.innerHTML = 'Comments: ' + image.comments;
-
-        gallery.appendChild(rowWrapper);
-        rowWrapper.appendChild(img);
-        rowWrapper.appendChild(metaWrapper);
-        metaWrapper.appendChild(infoItemLikes);
-        metaWrapper.appendChild(infoItemViews);
-        metaWrapper.appendChild(infoItemComments);
-        metaWrapper.appendChild(infoItemDownloads);
-      });
-    }
-  } catch (error) {
-    showError(error.message);
-  } finally {
-    toggleLoader(false);
-  }
+function clearGallery() {
+  gallery.innerHTML = '';
 }
 
-form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = new FormData(form);
-    const query = data.get('searchQuery');
+function renderImages(images) {
+  images.forEach(image => {
+    const rowWrapper = document.createElement('div');
+    const link = document.createElement('a');
+    const img = document.createElement('img');
+    const metaWrapper = document.createElement('div');
+    const infoItemLikes = document.createElement('p');
+    const infoItemViews = document.createElement('p');
+    const infoItemComments = document.createElement('p');
+    const infoItemDownloads = document.createElement('p');
 
-    if (query) {
-      currentPage = 1;
-      renderImages(query);
-    } else {
-      Notiflix.Notify.warning('Please enter a search query.');
+    infoItemLikes.classList.add('info-item');
+    infoItemViews.classList.add('info-item');
+    infoItemComments.classList.add('info-item');
+    infoItemDownloads.classList.add('info-item');
+
+    rowWrapper.classList.add('photo-card');
+    metaWrapper.classList.add('info');
+
+    link.href = image.url;
+
+    img.value = image.id;
+    img.src = image.thumbnail;
+    img.alt = image.tags;
+    img.loading = 'lazy';
+
+    infoItemLikes.textContent = `Likes: ${image.likes}`;
+    infoItemViews.textContent = `Views: ${image.views}`;
+    infoItemDownloads.textContent = `Downloads: ${image.downloads}`;
+    infoItemComments.textContent = `Comments: ${image.comments}`;
+
+    gallery.appendChild(rowWrapper);
+    rowWrapper.appendChild(link);
+    link.appendChild(img);
+    rowWrapper.appendChild(metaWrapper);
+    metaWrapper.appendChild(infoItemLikes);
+    metaWrapper.appendChild(infoItemViews);
+    metaWrapper.appendChild(infoItemComments);
+    metaWrapper.appendChild(infoItemDownloads);
+  });
+
+  lightbox.refresh();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  toggleLoader(false);
+  localStorage.clear();
+});
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  toggleMoreButton(false);
+  clearGallery();
+
+  const data = new FormData(form);
+  query = data.get('searchQuery');
+  localStorage.setItem('page', '1');
+
+  if (query) {
+    toggleLoader(true);
+    try {
+      const images = await fetchImages(query);
+      renderImages(images);
+      toggleMoreButton(images.length > 0);
+      if (images.length === 0) {
+        Notiflix.Notify.failure(`No photos with phrase "${query}" found`);
+      }
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      toggleLoader(false);
     }
-  });
+  } else {
+    Notiflix.Notify.warning('Please enter a search query.');
+  }
+});
 
-  loadMoreButton.addEventListener('click', () => {
-    const data = new FormData(form);
-    const query = data.get('searchQuery');
-    renderImages(query);
-  });
+loadMoreButton.addEventListener('click', async () => {
+  const lastPage = localStorage.getItem('page');
+  const currentPage = (parseInt(lastPage) + 1).toString();
+  localStorage.setItem('page', currentPage);
+
+  try {
+    const pageImages = await fetchImages(query, currentPage);
+    renderImages(pageImages);
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  } catch (error) {
+    showError(error.message);
+  }
+});

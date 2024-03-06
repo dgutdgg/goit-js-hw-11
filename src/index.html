@@ -1,14 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Gallery</title>
-  <link rel="stylesheet" href="css/styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/notiflix@2.8.1/dist/notiflix.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notiflix@2.8.1/dist/notiflix.min.css">
-</head>
-<body>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page title</title>
+    <link rel="stylesheet" href="./sass/index.scss" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script type="module" src="./index.js"></script>
+  </head>
+  <body>
+
+
+
   <form class="search-form" id="search-form">
     <input
       type="text"
@@ -19,26 +22,13 @@
     <button type="submit">Search</button>
   </form>
 
-  <div class="gallery">
-    <div class="photo-card">
-      <img src="./images/logo.png" alt="" loading="lazy" />
-      <div class="info">
-        <p class="info-item">
-          <b>Likes:</b> <span class="likes"></span>
-        </p>
-        <p class="info-item">
-          <b>Views:</b> <span class="views"></span>
-        </p>
-        <p class="info-item">
-          <b>Comments:</b> <span class="comments"></span>
-        </p>
-        <p class="info-item">
-          <b>Downloads:</b> <span class="downloads"></span>
-        </p>
-      </div>
-    </div>
-  </div>
+  <p class="loader"></p>
 
-  <script src="./index.js" type="module"></script>
-</body>
+  <div class="gallery"></div>
+
+  <button type="button" class="load-more">Load more</button>
+
+  <script src="index.js" type="module"></script>
+
+  </body>
 </html>
